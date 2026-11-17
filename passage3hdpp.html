@@ -14,7 +14,7 @@ button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
 #hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 14px;border-bottom:2px solid var(--bd);flex-wrap:wrap}
 .logo{background:var(--ac);color:#fff;font-weight:900;letter-spacing:2px;padding:3px 9px}
-.hl,.hr{display:flex;align-items:center;gap:8px}
+.hl,.hr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .mut{color:var(--mut);font-size:.85em}
 .ib{border:1px solid var(--bd);background:var(--card);border-radius:4px;padding:4px 9px}
 .ib:hover{border-color:var(--ac)}
@@ -99,6 +99,7 @@ body[data-tab=p] #qp,body[data-tab=q] #pp{display:none}}
 </head>
 <body data-tab="p">
 
+<!-- ===== START MENU ===== -->
 <div class="ov on" id="st"><div class="wrap cd">
   <div class="logo">IELTS</div>
   <h2>Academic Reading · Passage 3</h2>
@@ -113,9 +114,11 @@ body[data-tab=p] #qp,body[data-tab=q] #pp{display:none}}
     <li>Your answers are saved automatically on this device.</li>
   </ul>
   <button class="sub big" id="go">Start test →</button>
+  <button class="ib big" id="rt" style="display:none;margin-top:8px">↻ Start a new attempt</button>
   <p class="cr">Made by <b>Razzakov Yunus</b></p>
 </div></div>
 
+<!-- ===== TEST SCREEN ===== -->
 <div id="hd">
   <div class="hl"><span class="logo">IELTS</span><span class="mut" id="tid"></span></div>
   <div class="hr">
@@ -132,6 +135,8 @@ body[data-tab=p] #qp,body[data-tab=q] #pp{display:none}}
 <div id="sp"><div id="pp"></div><div id="hn"></div><div id="qp"></div></div>
 <div id="pal"><div id="dots"></div><button class="nv" id="pv">←</button><button class="nv" id="nx">→</button></div>
 <div id="tb"><button data-c="y" style="background:#ffe066">&nbsp;</button><button data-c="g" style="background:#8fe3a1">&nbsp;</button><button data-c="p" style="background:#ffb3c7">&nbsp;</button><button data-a="note">📝</button><button data-a="clr">✕</button></div>
+
+<!-- ===== RESULTS PAGE ===== -->
 <div class="ov" id="rs"><div class="wrap" id="rb"></div></div>
 
 <script>
@@ -167,18 +172,22 @@ qs:[
 {n:38,a:'magic formula',p:5,s:'cling to the idea of a magic formula',e:'Older executives cling to the idea of a magic formula to bring people into line with corporate strategy.'},
 {n:39,a:'back-to-front thinking',p:5,s:'that is back-to-front thinking',e:'Nicholson calls this approach back-to-front thinking.'},
 {n:40,a:'human nature',p:5,s:'we should be reinventing our business structures, not our fundamental human nature',e:'Nicholson says businesses should reinvent their structures rather than try to change fundamental human nature.'}]}]};
+
 /* ===== APP ===== */
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],KEY='ielts-p3-razzakov-yunus';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const KEY='ielts-p3-razzakov-yunus',VER='3';
 const Q=T.groups.flatMap(g=>g.qs);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let S={ans:{},fl:{},fs:1,th:'light'};
 try{S={...S,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){}
+if(S.ver!==VER){delete S.pass;S.ver=VER}   /* drops stale saved passage when the code is updated */
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const pp=$('#pp'),qp=$('#qp');
 let cur=0;
 function applyLook(){document.documentElement.dataset.t=S.th;document.documentElement.style.setProperty('--fs',S.fs);$('#th').textContent=S.th=='dark'?'☀️':'🌙'}
 applyLook();
 
-/* render */
+/* render passage + questions */
 pp.innerHTML=S.pass||`<h2>${T.title}</h2>`+T.paras.map((p,i)=>`<div class="pb" id="p${i+1}"><span class="pn">${i+1}</span><p>${p}</p></div>`).join('');
 const fl=n=>`<button class="fl" data-f="${n}" title="Flag for review">⚑</button>`;
 qp.innerHTML=T.groups.map(g=>{
@@ -190,10 +199,10 @@ qp.innerHTML=T.groups.map(g=>{
  return h}).join('');
 $('#dots').innerHTML=Q.map(q=>`<button data-n="${q.n}">${q.n}</button>`).join('');
 
-/* answers */
+/* answers + palette */
+const ok=q=>(S.ans[q.n]||'').toLowerCase()==q.a.toLowerCase();
 function restore(){Q.forEach(q=>{const v=S.ans[q.n];if(!v)return;const r=$(`input[data-q="${q.n}"][value="${v}"]`),s=$(`select[data-q="${q.n}"]`);if(r)r.checked=true;if(s)s.value=v})}
 function upd(){$$('#dots button').forEach(b=>{const n=+b.dataset.n,q=Q.find(x=>x.n==n);b.className=(S.ans[n]?'a ':'')+(S.fl[n]?'f ':'')+(n==cur?'c ':'')+(S.done?(ok(q)?'ok':'bad'):'')});$$('.fl').forEach(b=>b.classList.toggle('on',!!S.fl[b.dataset.f]))}
-const ok=q=>(S.ans[q.n]||'').toLowerCase()==q.a.toLowerCase();
 qp.addEventListener('change',e=>{const n=e.target.dataset.q;if(!n)return;S.ans[n]=e.target.value;cur=+n;save();upd()});
 qp.addEventListener('click',e=>{const b=e.target.closest('.fl');if(b){S.fl[b.dataset.f]=!S.fl[b.dataset.f];save();upd()}});
 function go(n){n=Math.max(27,Math.min(40,n));cur=n;document.body.dataset.tab='q';$('#qb-'+n).scrollIntoView({block:'center',behavior:'smooth'});upd()}
@@ -234,12 +243,15 @@ function tick(){const el=Math.floor((Date.now()-S.t0)/1000),t=$('#tm');
  t.className=left<=60?'crit':left<=300?'warn':'';
  if(!left)submit(true)}
 
-/* start / submit */
+/* start / retake / submit */
 function begin(){document.getElementById('st').classList.remove('on');$('#tid').textContent='Test taker ID: '+S.uid;restore();upd();
  if(S.done){finish()}else{tick();iv=setInterval(tick,1000)}}
 $('#go').onclick=()=>{if(!S.t0){S.uid=($('#uid').value||'STUDENT').trim();S.mins=+$('#mins').value;S.t0=Date.now();save()}begin()};
-if(S.t0){$('#go').textContent=S.done?'View results →':'Resume test →';$('#uid').value=S.uid;$('#uid').disabled=$('#mins').disabled=true}
-function lock(){$$('#qp input,#qp select').forEach(i=>i.disabled=true);$$('.q').forEach(el=>el.classList.add(ok(Q.find(q=>'qb-'+q.n==el.id))?'ok':'bad'));$$('.g').forEach(el=>el.classList.add(ok(Q.find(q=>'qb-'+q.n==el.id))?'ok':'bad'));$('#sb').textContent='Results';upd()}
+$('#uid').addEventListener('keydown',e=>{if(e.key==='Enter')$('#go').click()});
+function retake(){if(confirm('Erase this attempt and start again?')){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}}
+if(S.t0){$('#go').textContent=S.done?'View results →':'Resume test →';$('#uid').value=S.uid;$('#uid').disabled=$('#mins').disabled=true;
+ $('#rt').style.display='block';$('#rt').onclick=retake}
+function lock(){$$('#qp input,#qp select').forEach(i=>i.disabled=true);$$('.q,.g').forEach(el=>el.classList.add(ok(Q.find(q=>'qb-'+q.n==el.id))?'ok':'bad'));$('#sb').textContent='Results';upd()}
 function submit(auto){if(S.done){return showRes()}
  const un=Q.filter(q=>!S.ans[q.n]).length;
  if(!auto&&!confirm(un?`${un} question(s) unanswered. Submit anyway?`:'Submit your answers?'))return;
@@ -247,26 +259,28 @@ function submit(auto){if(S.done){return showRes()}
 function finish(){lock();showRes()}
 $('#sb').onclick=()=>submit(false);
 
-/* results */
+/* results page */
 const BAND=[[39,9],[37,8.5],[35,8],[33,7.5],[30,7],[27,6.5],[23,6],[19,5.5],[15,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5],[0,2]];
 function showRes(){
  const sc=Q.filter(ok).length,raw=Math.round(sc/Q.length*40),band=BAND.find(b=>raw>=b[0])[1],used=Math.round(((S.end||Date.now())-S.t0)/1000);
- $('#rb').innerHTML=`<h2>📋 Test Results</h2><p class="mut" style="text-align:center">${S.uid} · Passage 3 — ${T.title}</p>
+ $('#rb').innerHTML=`<h2>📋 Test Results</h2><p class="mut" style="text-align:center">${esc(S.uid)} · Passage 3 — ${T.title}</p>
  <div class="score"><div><b>${sc}/${Q.length}</b>Correct</div><div><b>${Math.round(sc/Q.length*100)}%</b>Accuracy</div><div><b>≈ ${band}</b>Estimated band*</div><div><b>${fmt(used)}</b>Time used</div></div>
  <p class="mut">*Estimate only: your score scaled to 40 questions (${raw}/40) on the Academic Reading band table. A real test has 3 passages.</p><br>
- ${Q.map(q=>{const a=S.ans[q.n];return `<div class="ri ${ok(q)?'ok':''}"><b>${q.n}</b> ${ok(q)?'✓':'✗'} Your answer: <b>${a||'— (blank)'}</b>${ok(q)?'':` · Correct: <b>${q.a}</b>`}<p>${q.e}</p><button class="ib" data-s="${q.n}">Show in passage</button></div>`}).join('')}
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="sub" onclick="$('#rs').classList.remove('on')">Review in test</button><button class="ib" onclick="print()">🖨 Print</button><button class="ib" onclick="if(confirm('Erase this attempt and start again?')){localStorage.removeItem(KEY);location.reload()}">↻ Retake</button></div>
+ ${Q.map(q=>{const a=S.ans[q.n];return `<div class="ri ${ok(q)?'ok':''}"><b>${q.n}</b> ${ok(q)?'✓':'✗'} Your answer: <b>${esc(a||'— (blank)')}</b>${ok(q)?'':` · Correct: <b>${q.a}</b>`}<p>${q.e}</p><button class="ib" data-s="${q.n}">Show in passage</button></div>`}).join('')}
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="sub" onclick="document.getElementById('rs').classList.remove('on')">Review in test</button><button class="ib" onclick="print()">🖨 Print</button><button class="ib" onclick="retake()">↻ Retake</button></div>
  <p class="cr" style="text-align:center">Made by <b>Razzakov Yunus</b></p>`;
  $('#rs').classList.add('on')}
 $('#rb').onclick=e=>{const n=e.target.dataset.s;if(!n)return;$('#rs').classList.remove('on');evid(Q.find(q=>q.n==n))};
+
+/* show evidence in passage */
 function evid(q){document.body.dataset.tab='p';
  $$('mark.ev').forEach(m=>m.replaceWith(...m.childNodes));pp.normalize();
- const el=q.p?$('#p'+q.p):pp;(q.p?el:pp).scrollIntoView?.({behavior:'smooth',block:'center'});
  if(!q.p){pp.scrollTo({top:0,behavior:'smooth'});return}
+ const el=$('#p'+q.p);el.scrollIntoView({behavior:'smooth',block:'center'});
  el.classList.add('fl');setTimeout(()=>el.classList.remove('fl'),2200);
  const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let nd;
  while(nd=w.nextNode()){const i=nd.data.indexOf(q.s);if(i>-1){const r=document.createRange();r.setStart(nd,i);r.setEnd(nd,i+q.s.length);const m=document.createElement('mark');m.className='ev';r.surroundContents(m);break}}}
-window.addEventListener('beforeunload',()=>{$$('mark.ev').forEach(m=>m.replaceWith(...m.childNodes));pp.normalize();savePass()});
+window.addEventListener('beforeunload',()=>{try{if(!localStorage.getItem(KEY))return}catch(e){return}$$('mark.ev').forEach(m=>m.replaceWith(...m.childNodes));pp.normalize();savePass()});
 </script>
 </body>
 </html>
